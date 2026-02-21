@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Upcoming Payments</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #f4f6f9;
+            padding: 40px;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            padding: 10px 18px;
+            background: black;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            background: white;
+            border-collapse: collapse;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #111;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f1f1f1;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 20px;
+            color: gray;
+        }
+    </style>
+</head>
+<body>
+
+<a href="/" class="back-btn">⬅ Back to Dashboard</a>
+
+<h2>Upcoming Payments (Next 7 Days)</h2>
+
+<table>
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Due Date</th>
+        <th>Total</th>
+        <th>Paid</th>
+        <th>Status</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="c : ${upcomingCustomers}">
+        <td th:text="${c.name}"></td>
+        <td th:text="${c.phoneNumber}"></td>
+        <td th:text="${c.dueDate}"></td>
+        <td th:text="${c.totalAmount}"></td>
+        <td th:text="${c.paidAmount}"></td>
+        <td th:text="${c.status}"></td>
+    </tr>
+
+    <tr th:if="${#lists.isEmpty(upcomingCustomers)}">
+        <td colspan="6" class="empty">
+            No upcoming payments 🎉
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

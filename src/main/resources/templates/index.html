@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Gym Billing Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Poppins',sans-serif; }
+
+        body {
+            min-height:100vh;
+            background:url("https://images.unsplash.com/photo-1583454110551-21f2fa2afe61") no-repeat center center/cover;
+            backdrop-filter:blur(8px);
+            color:white;
+        }
+
+        .overlay { background:rgba(0,0,0,0.75); min-height:100vh; padding:30px; }
+
+        h1 { text-align:center; margin-bottom:30px; font-size:38px; letter-spacing:2px; }
+
+        .dashboard { display:flex; justify-content:space-around; margin-bottom:40px; flex-wrap:wrap; }
+
+        .card {
+            background:rgba(255,255,255,0.12);
+            backdrop-filter:blur(20px);
+            border-radius:20px;
+            padding:30px;
+            width:260px;
+            text-align:center;
+            margin:10px;
+            transition:0.4s;
+            box-shadow:0 8px 30px rgba(0,0,0,0.6);
+        }
+
+        .card:hover { transform:translateY(-8px); box-shadow:0 15px 40px rgba(0,0,0,0.9); }
+
+        .card h3 { font-size:26px; margin-top:10px; color:#00ffcc; }
+
+        .section-title {
+            margin-top:40px;
+            margin-bottom:15px;
+            font-size:24px;
+            color:#00ffcc;
+            text-align:center;
+        }
+
+        .form-container {
+            background:rgba(255,255,255,0.12);
+            backdrop-filter:blur(20px);
+            padding:30px;
+            border-radius:20px;
+            margin-bottom:40px;
+            box-shadow:0 8px 30px rgba(0,0,0,0.6);
+        }
+
+        .form-container input {
+            width:100%;
+            padding:12px;
+            margin:10px 0;
+            border-radius:10px;
+            border:none;
+            outline:none;
+        }
+
+        .btn {
+            padding:8px 16px;
+            border-radius:8px;
+            border:none;
+            cursor:pointer;
+            font-weight:bold;
+            transition:0.3s;
+            text-decoration:none;
+            display:inline-block;
+            margin:2px;
+        }
+
+        .btn-primary { background:#00ffcc; color:black; }
+        .btn-primary:hover { background:#00cc99; }
+
+        .btn-danger { background:red; color:white; }
+        .btn-danger:hover { background:darkred; }
+
+        table {
+            width:100%;
+            border-collapse:collapse;
+            background:rgba(255,255,255,0.12);
+            backdrop-filter:blur(20px);
+            border-radius:20px;
+            overflow:hidden;
+            margin-top:20px;
+        }
+
+        table th, table td { padding:14px; text-align:center; }
+
+        table th { background:rgba(0,0,0,0.7); }
+
+        table tr:hover { background:rgba(255,255,255,0.2); }
+
+        .status-paid { color:#00ff00; font-weight:bold; }
+        .status-pending, .status-unpaid { color:red; font-weight:bold; }
+
+        .search-box {
+            margin:20px 0;
+            text-align:center;
+        }
+
+        .search-box input {
+            width:300px;
+            padding:10px;
+            border-radius:10px;
+            border:none;
+            outline:none;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="overlay">
+
+    <h1>🏋 GYM BILLING DASHBOARD</h1>
+
+    <!-- DASHBOARD CARDS -->
+    <div class="dashboard">
+        <div class="card">
+            <h2>Total Members</h2>
+            <h3 th:text="${totalMembers}">0</h3>
+        </div>
+        <div class="card">
+            <h2>Total Revenue</h2>
+            <h3 th:text="${totalRevenue}">0</h3>
+        </div>
+        <div class="card">
+            <h2>Total Pending</h2>
+            <h3 th:text="${totalPending}">0</h3>
+        </div>
+    </div>
+    <a href="/upcoming-payments">Upcoming Payments</a>
+
+
+
+    <!-- FORM -->
+    <div class="form-container">
+        <form th:action="@{/save}" th:object="${customer}" method="post">
+            <input type="hidden" th:field="*{id}"/>
+            <input type="text" th:field="*{name}" placeholder="Customer Name" required/>
+            <input type="text" th:field="*{phoneNumber}" placeholder="Phone Number with country code" required/>
+            <input type="number" step="0.01" th:field="*{totalAmount}" placeholder="Total Amount" required/>
+            <input type="number" step="0.01" th:field="*{paidAmount}" placeholder="Paid Amount" required/>
+            <input type="date" th:field="*{billingDate}" required/>
+            <input type="date" th:field="*{dueDate}" required/>
+            <button type="submit" class="btn btn-primary">
+                <span th:text="${customer.id == null} ? 'Add Customer' : 'Update Customer'"></span>
+            </button>
+        </form>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔎 Live search by name or phone..." onkeyup="searchCustomer()">
+    </div>
+
+    <!-- CUSTOMER TABLE -->
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Status</th>
+            <th>Billing</th>
+            <th>Due</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+
+        <tbody id="customerTableBody">
+        <tr th:each="c : ${customers}">
+            <td th:text="${c.name}"></td>
+            <td th:text="${c.phoneNumber}"></td>
+            <td th:text="${c.totalAmount}"></td>
+            <td th:text="${c.paidAmount}"></td>
+            <td>
+                <span th:text="${c.status}"
+                      th:classappend="${c.status == 'PAID'} ? 'status-paid' : 'status-pending'">
+                </span>
+            </td>
+            <td th:text="${c.billingDate}"></td>
+            <td th:text="${c.dueDate}"></td>
+            <td>
+                <a th:href="@{'/edit/' + ${c.id}}" class="btn btn-primary">Edit</a>
+                <a th:href="@{'/delete/' + ${c.id}}" class="btn btn-danger"
+                   onclick="return confirm('Delete this customer?');">Delete</a>
+                <a th:href="@{'/invoice/' + ${c.id}}" class="btn btn-primary">Invoice</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- SEARCH SCRIPT -->
+    <script>
+        function searchCustomer() {
+
+            let keyword = document.getElementById("searchInput").value;
+
+            fetch("/customers/search?keyword=" + keyword)
+                .then(response => response.json())
+                .then(data => {
+
+                    let tableBody = document.getElementById("customerTableBody");
+                    tableBody.innerHTML = "";
+
+                    data.forEach(c => {
+                        tableBody.innerHTML += `
+                            <tr>
+                                <td>${c.name}</td>
+                                <td>${c.phoneNumber}</td>
+                                <td>${c.totalAmount}</td>
+                                <td>${c.paidAmount}</td>
+                                <td>${c.status}</td>
+                                <td>${c.billingDate}</td>
+                                <td>${c.dueDate}</td>
+                                <td>
+                                    <a href="/edit/${c.id}" class="btn btn-primary">Edit</a>
+                                    <a href="/delete/${c.id}" class="btn btn-danger">Delete</a>
+                                    <a href="/invoice/${c.id}" class="btn btn-primary">Invoice</a>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                });
+        }
+    </script>
+
+</div>
+</body>
+</html>
